@@ -112,8 +112,6 @@ Open the app's **Get Info** in Finder and drag the `.icns` (or PNG) onto the ico
 
 [`dock-icon-badger.md`](dock-icon-badger.md) is the full spec: per-style geometry and knobs, the exact ref-match curl, Apple icon template research, tuning tips, troubleshooting, and a copy of the script so the doc stands on its own.
 
-Visual reference for the curl: [realistic curled paper corner](https://www.magnific.com/free-vector/realistic-curled-paper-corner_11772011.htm).
-
 ## License
 
 [MIT](LICENSE) © 2026 Balazs Szabo. This covers the code and the original artwork in `samples/`, `examples/` and `web/`. The Todo-Dodo logo (`samples/badges/todo-dodo.*`, also shown in the examples) belongs to Todo-Dodo, is included with permission as a sample badge, and is not covered by the MIT license.
