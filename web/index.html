@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dock Icon Badger</title>
+<style>
+:root{--bg:#f5f5f7;--panel:#fff;--fg:#1d1d1f;--muted:#6e6e73;--line:#e3e3e8;--accent:#0a84ff;--accent-fg:#fff;--chip:#f0f0f4;--warn-bg:#fff6e0;--warn-fg:#7a5600;--err:#d70015;
+  --dock-light:linear-gradient(180deg,#dfe4ee 0%,#c9d2e3 100%);--dock-dark:linear-gradient(180deg,#26282f 0%,#15161a 100%);color-scheme:light}
+[data-theme=dark]{--bg:#141416;--panel:#1d1d20;--fg:#f2f2f5;--muted:#9a9aa2;--line:#2e2e33;--chip:#27272b;--warn-bg:#3a2f12;--warn-fg:#f5d68a;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+header h1{font-size:18px;margin:0;font-weight:650;letter-spacing:-.01em}
+header .sub{color:var(--muted);font-size:13px}
+header .sp{flex:1}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:6px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+button:hover,.btn:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:5px 10px}
+.seg button.on{background:var(--chip);font-weight:600}
+main{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 57px)}
+aside{border-right:1px solid var(--line);background:var(--panel);padding:16px 18px 40px;overflow:auto;max-height:calc(100vh - 57px);position:sticky;top:57px}
+section.card{margin-bottom:22px}
+section.card h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px;font-weight:650;display:flex;align-items:center;gap:8px}
+section.card h2 .sp{flex:1}
+section.card h2 a{text-transform:none;letter-spacing:0;font-weight:500;color:var(--accent);cursor:pointer;font-size:12px}
+.src4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px;margin:-8px;border-radius:16px}
+.t4{font:inherit;height:96px;min-width:0;overflow:hidden;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:6px 4px;text-align:center;font-size:11.5px;line-height:1.2;transition:border-color .15s,background .15s}
+.t4:hover:not(:disabled){border-color:var(--accent)}
+.t4 svg{width:26px;height:26px;stroke:var(--accent);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.t4 b{font-weight:600}
+.t4 .s{color:var(--muted);font-size:10.5px}
+.t4.drop{border-style:dashed}
+.t4.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+.t4:disabled{opacity:.45;cursor:default}
+/* guidance: the next section that needs input pulses gently */
+/* --glow is the accent, a little lighter in dark mode so the halo reads on dark panels */
+:root{--glow:var(--accent)} [data-theme=dark]{--glow:#3d9bff}
+@keyframes guide{0%,100%{background:color-mix(in srgb,var(--glow) 4%,transparent);box-shadow:0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent}
+  50%{background:color-mix(in srgb,var(--glow) 55%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--glow) 90%,transparent),0 0 26px 10px color-mix(in srgb,var(--glow) 70%,transparent),0 0 70px 26px color-mix(in srgb,var(--glow) 35%,transparent)}}
+/* tiles turn translucent while their section glows, so the glow shows through them too */
+.src4.guide .t4,.styles.guide .style{background:color-mix(in srgb,var(--bg) 62%,transparent)}
+[data-theme=dark] .src4.guide .t4,[data-theme=dark] .styles.guide .style{background:color-mix(in srgb,var(--bg) 45%,transparent)}
+.src4.guide,.styles.guide{animation:guide 1.6s ease-in-out infinite;position:relative;z-index:1}
+@media (prefers-reduced-motion:reduce){.src4.guide,.styles.guide{animation:none;background:color-mix(in srgb,var(--glow) 30%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--glow) 80%,transparent),0 0 22px 6px color-mix(in srgb,var(--glow) 40%,transparent)}}
+.chip.pending .d{color:var(--accent)}
+.chip .pic{position:relative;width:40px;height:40px;flex:none}
+.chip .pic .spin{position:absolute;inset:8px;width:auto;height:auto;border-width:2.5px}
+.chip.pending img{opacity:.55}
+.sm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;padding:14px 16px;overflow:auto}
+.sm{border:1.5px solid var(--line);border-radius:12px;padding:8px 6px 6px;text-align:center;cursor:pointer;user-select:none;position:relative;background:var(--bg)}
+.sm img{width:100%;aspect-ratio:1;object-fit:contain;display:block}
+.sm .nm{font-size:12px;font-weight:600;margin-top:2px}
+.sm.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+.sm .ck{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);background:var(--panel);font-size:12px;line-height:15px;color:#fff}
+.sm.on .ck{background:var(--accent);border-color:var(--accent)}
+.sm.added{opacity:.5;cursor:default}
+.sm .ad{font-weight:500;color:var(--muted);font-size:10.5px}
+.sm .rec{position:absolute;top:6px;left:6px;font-size:9.5px;font-weight:600;color:var(--accent);background:var(--panel);border-radius:5px;padding:0 4px}
+.modal .ft{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.modal .ft .sp{flex:1}
+.modal .bd{padding:14px 16px}
+.modal .hd h3{margin:0;font-size:15px;flex:1}
+.row{display:flex;gap:6px;margin-top:8px}
+.row input[type=text]{flex:1}
+input[type=text],input[type=number],select{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:5px 8px;min-width:0}
+.chips{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.chip{display:flex;align-items:center;gap:10px;background:var(--chip);border-radius:10px;padding:6px 8px}
+.chip img{width:40px;height:40px;object-fit:contain;border-radius:8px;background:repeating-conic-gradient(#0000 0 25%,#8881 0 50%) 0/10px 10px}
+.chip .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .d{color:var(--muted);font-size:12px}
+.chip .t{flex:1;min-width:0}
+.chip .x{border:0;background:none;color:var(--muted);font-size:18px;padding:0 6px}
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;margin:-8px;border-radius:16px}
+.style{border:1.5px solid var(--line);border-radius:10px;padding:6px 4px 5px;text-align:center;cursor:pointer;font-size:11.5px;user-select:none;background:var(--bg)}
+.style img{width:100%;aspect-ratio:1;display:block;margin-bottom:2px}
+.style.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+.style .nm{font-weight:600}
+.opts{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center}
+.opts label{color:var(--muted)}
+details.knobs{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--bg)}
+details.knobs summary{padding:8px 10px;cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center}
+details.knobs summary .cnt{color:var(--accent);font-weight:500;font-size:12px}
+details.knobs summary .sp{flex:1}
+details.knobs summary{list-style:none}
+details.knobs summary::-webkit-details-marker{display:none}
+details.knobs summary .chev{width:16px;height:16px;flex:none;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}
+details.knobs[open] summary .chev{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){details.knobs summary .chev{transition:none}}
+details.knobs .desc{color:var(--muted);font-size:12px;padding:0 10px 6px}
+details.knobs .grid{display:grid;grid-template-columns:1fr 1.2fr;gap:6px 10px;padding:4px 10px 10px;align-items:center}
+details.knobs .grid label{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)}
+details.knobs .grid label.chg{color:var(--accent);font-weight:600}
+.colorw{display:flex;gap:6px;align-items:center}
+.colorw input[type=color]{width:36px;height:26px;border:1px solid var(--line);border-radius:6px;background:none;padding:1px}
+.note{background:var(--warn-bg);color:var(--warn-fg);border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:13px}
+.content{padding:16px 22px 60px;min-width:0}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .status{color:var(--muted)}
+.toolbar .sp{flex:1}
+.stage{border-radius:16px;padding:18px 20px 8px;background:var(--dock-light);min-height:300px;transition:background .2s}
+.stage.dark{background:var(--dock-dark)}
+.stage.dark .group h3,.stage.dark .tile .lab{color:#e9e9ee}
+.stage.dark .group .gd,.stage.dark .tile .info{color:#a0a3ad}
+.group{margin-bottom:18px}
+.group h3{margin:0;font-size:15px;color:#1d1d1f}
+.group .gd{font-size:12px;color:#5b5f6b;margin:2px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px}
+.tile{text-align:center}
+.tile .im{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.tile img{width:100%;height:100%;object-fit:contain;filter:none}
+.tile .lab{font-size:12.5px;font-weight:600;color:#1d1d1f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .info{font-size:11px;color:#5b5f6b;min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .dl{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.tile .dl a{font-size:11.5px;padding:2px 8px;border-radius:6px;background:#ffffffb0;color:#1d1d1f;text-decoration:none;border:1px solid #0000001a}
+.stage.dark .tile .dl a{background:#ffffff1a;color:#eee;border-color:#ffffff22}
+.tile.busy img{opacity:.75;transition:opacity .1s}
+input.rot{flex:1;min-width:0;accent-color:var(--accent)}
+input.rotn{width:64px}
+.tile.err .im{color:var(--err);font-size:12px;padding:10px}
+.spin{width:34px;height:34px;border:3px solid #8884;border-top-color:var(--accent);border-radius:50%;animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:#5b5f6b;padding:70px 20px}
+.stage.dark .empty{color:#a0a3ad}
+.empty h2{margin:0 0 6px;font-size:20px;color:inherit}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;z-index:20}
+.modal.open{display:flex}
+.modal .box{background:var(--panel);border-radius:14px;width:min(560px,92vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px #0006}
+.modal .hd{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.modal .hd input{flex:1}
+.modal .ls{overflow:auto;padding:6px 8px}
+.modal .it{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px}
+.modal .it:hover{background:var(--chip)}
+.modal .it .p{color:var(--muted);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:30;max-width:80vw}
+#toast.show{opacity:1}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--chip);padding:1px 5px;border-radius:5px}
+@media (max-width:900px){main{grid-template-columns:1fr}aside{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Dock Icon Badger</h1><span class="sub">Create badged macOS app icons.</span>
+  <span class="sp"></span>
+  <span class="sub">Theme</span>
+  <div class="seg" id="theme"><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div>
+</header>
+<main>
+<aside>
+  <div class="note" id="svgnote" hidden>SVG files can't be rendered on this computer (no cairo or librsvg). PNG, JPG and .icns work. To enable SVG: <code>brew install cairo</code> on macOS, or <code>sudo apt install libcairo2</code> on Linux, then restart.</div>
+
+  <section class="card" data-sec="app">
+    <h2>App icons <span class="sp"></span><a data-clear="app" hidden>Remove all</a></h2>
+    <div class="src4" id="src-app">
+      <button class="t4" data-kind="app" data-act="samples"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><b>Samples</b><span class="s">pick sample icons</span></button>
+      <button class="t4 drop" data-kind="app" data-act="upload"><svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><b>Drop / upload</b><span class="s">.png .svg .icns .jpg</span></button>
+      <button class="t4" data-kind="app" data-act="path"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M8 13h8"/></svg><b>Local path</b><span class="s">paste a file path</span></button>
+      <button class="t4" data-kind="app" data-act="apps"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M9 12h6M12 9v6"/></svg><b>Installed apps</b><span class="s mac-note">from /Applications</span></button>
+    </div>
+    <input type="file" id="file-app" multiple accept=".icns,.png,.svg,.jpg,.jpeg,.webp" hidden>
+    <div class="chips" id="chips-app"></div>
+  </section>
+
+  <section class="card" data-sec="logo">
+    <h2>Badges <span class="sp"></span><a data-clear="logo" hidden>Remove all</a></h2>
+    <div class="src4" id="src-logo">
+      <button class="t4" data-kind="logo" data-act="samples"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><b>Samples</b><span class="s">pick sample badges</span></button>
+      <button class="t4 drop" data-kind="logo" data-act="upload"><svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><b>Drop / upload</b><span class="s">.png .svg .icns .jpg</span></button>
+      <button class="t4" data-kind="logo" data-act="path"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M8 13h8"/></svg><b>Local path</b><span class="s">paste a file path</span></button>
+      <button class="t4" data-kind="logo" data-act="apps"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M9 12h6M12 9v6"/></svg><b>Installed apps</b><span class="s mac-note">from /Applications</span></button>
+    </div>
+    <input type="file" id="file-logo" multiple accept=".icns,.png,.svg,.jpg,.jpeg,.webp" hidden>
+    <div class="hint">A transparent PNG or SVG works best: a logo, a "BETA" seal, anything.</div>
+    <div class="chips" id="chips-logo"></div>
+  </section>
+
+  <section class="card">
+    <h2>Styles <span class="sp"></span><a id="all-styles">All</a><a id="no-styles">None</a></h2>
+    <div class="styles" id="styles"></div>
+  </section>
+
+  <section class="card">
+    <h2>Options</h2>
+    <div class="opts">
+      <label for="size">Size</label>
+      <div class="colorw"><select id="size"><option value="ref">Standard</option><option value="bigger">Bigger</option><option value="custom">Custom…</option></select>
+        <input type="number" id="size-custom" min="0.3" max="1.6" step="0.05" value="1.0" hidden style="width:80px"></div>
+      <label>Accent</label>
+      <div class="colorw"><label style="color:var(--fg)"><input type="checkbox" id="accent-auto" checked> from badge</label><input type="color" id="accent" value="#357dbd" disabled></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Style knobs <span class="sp"></span><a id="reset-all" hidden>Reset all</a></h2>
+    <div id="knobs"></div>
+    <div class="hint">Values are the same as the CLI's <code>--param key=value</code>. Colors set to <i>auto</i> use the badge's dominant color.</div>
+  </section>
+</aside>
+
+<div class="content">
+  <div class="toolbar">
+    <span class="status" id="status"></span>
+    <span class="sp"></span>
+    <span class="sub" style="color:var(--muted)">Dock background</span>
+    <div class="seg" id="dockbg"><button data-v="auto" class="on">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div>
+    <button id="zip" disabled>Download all (.zip)</button>
+  </div>
+  <div class="stage" id="stage"><div class="empty" id="empty"><h2>Add app icons and a badge to start</h2>
+    <div id="empty-hint">Use the tiles on the left, or <a href="#" id="samples2">pick sample icons</a>. Icons re-render automatically as you change anything.</div></div><div id="groups"></div></div>
+  <p class="hint">PNG is 1024×1024 on Apple's icon grid. .icns has all 10 sizes (16–512 @1x/@2x), written by <span id="icnsw">…</span>.
+    To use one: select the app in Finder, press ⌘I, drag the .icns onto the small icon at the top left, then run <code>killall Dock</code>.</p>
+</div>
+</main>
+
+<div class="modal" id="m-apps"><div class="box">
+  <div class="hd"><input type="text" id="app-filter" placeholder="Filter installed apps"><button data-close>Done</button></div>
+  <div class="ls" id="app-list"></div>
+</div></div>
+<div class="modal" id="m-samples"><div class="box" style="width:min(640px,94vw)">
+  <div class="hd"><h3 id="sm-title">Sample icons</h3><div class="seg" id="sm-pick"><button data-v="all">All</button><button data-v="none">None</button><button data-v="rec">Recommended</button></div></div>
+  <div class="sm-grid" id="sm-grid"></div>
+  <div class="ft"><span class="hint" id="sm-count" style="margin:0"></span><span class="sp"></span><button data-close>Cancel</button><button class="primary" id="sm-add">Add</button></div>
+</div></div>
+<div class="modal" id="m-path"><div class="box">
+  <div class="hd"><h3 id="path-title">Add from a local path</h3></div>
+  <div class="bd"><input type="text" id="path-in" style="width:100%" placeholder="/Applications/Safari.app">
+    <div class="hint">An .app bundle, .icns, .png, .svg, .jpg or .webp file, or an .iconset folder on this computer. Tip: in Finder, ⌥-right-click a file → "Copy … as Pathname".</div></div>
+  <div class="ft"><span class="sp"></span><button data-close>Cancel</button><button class="primary" id="path-add">Add</button></div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const S = {info:null, items:{app:[], logo:[]}, sel:new Set(), samples:{}, knobs:{}, size:"ref", accent:"", gen:0, results:[]};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(msg, ms=3500){const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"), ms);}
+async function api(path, opts={}){const r=await fetch(path, opts); const ct=r.headers.get("content-type")||"";
+  if(!r.ok){let m=r.statusText; if(ct.includes("json")) m=(await r.json()).error||m; throw new Error(m);} return ct.includes("json")? r.json() : r.blob();}
+const post = (path, body) => api(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+
+// ---------- theme
+// Auto | Light | Dark for the page and for the Dock background; Auto follows the OS setting live.
+const darkMQ=matchMedia("(prefers-color-scheme: dark)"), pick=v=>["auto","light","dark"].includes(v)?v:"auto";
+const resolve=v=>v==="auto"?(darkMQ.matches?"dark":"light"):v;
+let themePick=pick(localStorage.dibTheme), dockPick=pick(localStorage.dibDock);
+function applyTheme(){document.documentElement.dataset.theme=resolve(themePick); $$("#theme button").forEach(b=>b.classList.toggle("on", b.dataset.v===themePick));}
+function applyDock(){$("#stage").classList.toggle("dark", resolve(dockPick)==="dark"); $$("#dockbg button").forEach(b=>b.classList.toggle("on", b.dataset.v===dockPick));}
+$$("#theme button").forEach(b=>b.onclick=()=>{themePick=localStorage.dibTheme=b.dataset.v; applyTheme();});
+$$("#dockbg button").forEach(b=>b.onclick=()=>{dockPick=localStorage.dibDock=b.dataset.v; applyDock();});
+darkMQ.addEventListener("change", ()=>{applyTheme(); applyDock();});
+applyTheme(); applyDock();
+
+// ---------- inputs
+// Every source (samples, upload, path, installed apps) adds a placeholder chip at once, then fills
+// it in when the server has decoded the file. Rendering only uses items that finished loading.
+const ready = kind => S.items[kind].filter(i=>!i.pending);
+// Duplicates are refused: each item has a source id (sample key, content hash of a file, or real
+// path of an .app/.iconset). The client checks what it knows up front; the server's id is checked again on arrival.
+const has = (kind, src, except) => S.items[kind].some(i=>i!==except&&(i.src===src||(i.pre&&i.pre===src)));
+const dupToast = (n) => toast(`${n} is already in the list`, 2500);
+function addPending(kind, name, thumb, load, pre){if(pre&&has(kind, pre)){dupToast(name); return Promise.resolve();}
+  const tmp={id:"p"+Math.random().toString(36).slice(2), kind, name, thumb:thumb||"", detail:"Loading…", pending:true, pre};
+  S.items[kind].push(tmp); drawChips(kind);
+  return load().then(it=>{const i=S.items[kind].indexOf(tmp); if(i<0) return;
+      if(has(kind, it.src, tmp)){S.items[kind].splice(i,1); drawChips(kind); dupToast(it.name); return;}
+      it.pre=pre; S.items[kind][i]=it; drawChips(kind); schedule(); return it;})
+    .catch(e=>{S.items[kind]=S.items[kind].filter(x=>x!==tmp); drawChips(kind); toast(`${name}: ${e.message}`, 6000);});}
+function drawChips(kind){$("#chips-"+kind).innerHTML = S.items[kind].map(it=>`<div class="chip ${it.pending?"pending":""}" data-id="${it.id}"><div class="pic">${it.thumb?`<img src="${esc(it.thumb)}" alt="">`:""}${it.pending?'<div class="spin"></div>':""}</div><div class="t"><div class="n">${esc(it.name)}</div><div class="d">${esc(it.detail)}</div></div><button class="x" title="Remove" data-id="${it.id}">×</button></div>`).join("");
+  $$("#chips-"+kind+" .x").forEach(b=>b.onclick=()=>{S.items[kind]=S.items[kind].filter(i=>i.id!==b.dataset.id); drawChips(kind); schedule();});
+  document.querySelector(`[data-clear=${kind}]`).hidden=!S.items[kind].length; guide();}
+$$("[data-clear]").forEach(a=>a.onclick=()=>{S.items[a.dataset.clear]=[]; drawChips(a.dataset.clear); schedule();});
+async function sha256(f){try{const h=await crypto.subtle.digest("SHA-256", await f.arrayBuffer()); return "file:"+[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join("");}catch(e){return "";}}
+async function upload(kind, files){for(const f of [...files]){const url=/\.(png|jpe?g|webp|svg)$/i.test(f.name)?URL.createObjectURL(f):"";
+  addPending(kind, f.name.replace(/\.[^.]+$/,""), url, ()=>api(`/api/upload?kind=${kind}&name=${encodeURIComponent(f.name)}`, {method:"POST", body:f}), await sha256(f));}}
+const addPath = (kind, p) => addPending(kind, p.replace(/\/+$/,"").split("/").pop().replace(/\.(app|icns|png|svg|jpe?g|webp|iconset)$/i,""), "", ()=>post("/api/path",{kind, path:p}), "typed:"+p.replace(/\/+$/,""));
+const openModal = id => $(id).classList.add("open"), closeModals = () => $$(".modal").forEach(m=>m.classList.remove("open"));
+$$("[data-close]").forEach(b=>b.onclick=closeModals);
+$$(".modal").forEach(m=>m.onclick=e=>{if(e.target===m) closeModals();});
+document.addEventListener("keydown", e=>{if(e.key==="Escape") closeModals();});
+const ACT={samples:openSamples, upload:kind=>$("#file-"+kind).click(), path:openPath, apps:openApps};
+for(const kind of ["app","logo"]){const fi=$("#file-"+kind), sec=document.querySelector(`[data-sec=${kind}]`), dz=sec.querySelector(".drop");
+  fi.onchange=()=>{upload(kind, fi.files); fi.value="";};
+  sec.querySelectorAll(".t4").forEach(b=>b.onclick=()=>ACT[b.dataset.act](kind));
+  sec.ondragover=e=>{e.preventDefault(); dz.classList.add("over");}; sec.ondragleave=e=>{if(!sec.contains(e.relatedTarget)) dz.classList.remove("over");};
+  sec.ondrop=e=>{e.preventDefault(); dz.classList.remove("over"); upload(kind, e.dataTransfer.files);};}
+
+// samples modal
+let SM={kind:"app", on:new Set()};
+const added = (kind, key) => has(kind, "sample:"+key);
+const fresh = kind => (S.samples[kind]||[]).filter(s=>!added(kind, s.key));
+// Empty list: start with Recommended. The list already has items: start with nothing selected.
+function openSamples(kind){SM={kind, on:new Set(S.items[kind].length?[]:fresh(kind).filter(s=>s.recommended).map(s=>s.key))};
+  $("#sm-title").textContent=kind==="app"?"Sample app icons":"Sample badges"; drawSamples(); openModal("#m-samples"); $("#sm-add").focus();}
+function drawSamples(){const kind=SM.kind, ls=fresh(kind), all=S.samples[kind]||[];
+  $("#sm-grid").innerHTML=all.map(s=>{const ad=added(kind, s.key), on=ad||SM.on.has(s.key);
+    return `<div class="sm ${on?"on":""} ${ad?"added":""}" data-k="${esc(s.key)}" role="checkbox" aria-checked="${on}" ${ad?'aria-disabled="true" title="Already added"':'tabindex="0"'}>${s.recommended?'<span class="rec">REC</span>':""}<span class="ck">${on?"✓":""}</span><img src="${s.thumb}" alt=""><div class="nm">${esc(s.name)}${ad?' <span class="ad">added</span>':""}</div></div>`;}).join("");
+  $$("#sm-grid .sm:not(.added)").forEach(el=>el.onclick=el.onkeydown=e=>{if(e.type==="keydown"&&e.key!==" "&&e.key!=="Enter") return; e.preventDefault();
+    const k=el.dataset.k; SM.on.has(k)?SM.on.delete(k):SM.on.add(k); drawSamples();});
+  const rec=ls.filter(s=>s.recommended).map(s=>s.key), mode=SM.on.size===ls.length?"all":!SM.on.size?"none":(SM.on.size===rec.length&&rec.every(k=>SM.on.has(k))?"rec":"");
+  $$("#sm-pick button").forEach(b=>b.classList.toggle("on", b.dataset.v===mode));
+  const nAdded=all.length-ls.length;
+  $("#sm-count").textContent=!ls.length?"All samples are already added":`${SM.on.size} of ${ls.length} selected${nAdded?` · ${nAdded} already added`:""}`; $("#sm-add").disabled=!SM.on.size;
+  $("#sm-add").textContent=SM.on.size?`Add ${SM.on.size}`:"Add";}
+$$("#sm-pick button").forEach(b=>b.onclick=()=>{const ls=fresh(SM.kind);
+  SM.on=new Set(b.dataset.v==="all"?ls.map(s=>s.key):b.dataset.v==="rec"?ls.filter(s=>s.recommended).map(s=>s.key):[]); drawSamples();});
+$("#sm-add").onclick=()=>{const kind=SM.kind; closeModals();
+  for(const s of S.samples[kind]) if(SM.on.has(s.key)) addPending(kind, s.name, s.thumb, ()=>post("/api/sample",{kind, key:s.key}), "sample:"+s.key);};
+
+// local path modal
+let pathKind="app";
+function openPath(kind){pathKind=kind; $("#path-title").textContent=kind==="app"?"Add an app icon from a local path":"Add a badge from a local path";
+  $("#path-in").placeholder=kind==="app"?"/Applications/Safari.app":"~/Desktop/logo.svg"; openModal("#m-path"); $("#path-in").focus();}
+const goPath=()=>{const p=$("#path-in").value.trim(); if(!p) return; closeModals(); $("#path-in").value=""; addPath(pathKind, p);};
+$("#path-add").onclick=goPath; $("#path-in").onkeydown=e=>{if(e.key==="Enter") goPath();};
+
+// installed apps modal (macOS)
+let allApps=[], appsKind="app";
+async function openApps(kind){appsKind=kind; openModal("#m-apps"); $("#app-filter").focus();
+  if(!allApps.length){$("#app-list").innerHTML='<div class="it">Loading…</div>'; try{allApps=await api("/api/apps");}catch(e){toast(e.message);}} drawApps();}
+$("#app-filter").oninput=drawApps;
+function drawApps(){const q=$("#app-filter").value.toLowerCase();
+  $("#app-list").innerHTML=allApps.filter(a=>a.name.toLowerCase().includes(q)).slice(0,400).map(a=>`<div class="it"><b>${esc(a.name)}</b><span class="p">${esc(a.path)}</span>${has(appsKind,"path:"+a.path)||has(appsKind,"typed:"+a.path)?'<button disabled>Added</button>':`<button data-p="${esc(a.path)}">Add</button>`}</div>`).join("")||'<div class="it">No apps found</div>';
+  $$("#app-list button[data-p]").forEach(b=>b.onclick=()=>{b.disabled=true; b.textContent="Added"; addPath(appsKind, b.dataset.p);});}
+
+// guidance: pulse the next section that needs input (icons, then badges, then styles)
+function guide(){if(!S.info) return; const next=!S.items.app.length?"app":!S.items.logo.length?"logo":!S.sel.size?"styles":"";
+  $("#src-app").classList.toggle("guide", next==="app"); $("#src-logo").classList.toggle("guide", next==="logo"); $("#styles").classList.toggle("guide", next==="styles");}
+
+// ---------- styles + knobs
+function drawStyles(){$("#styles").innerHTML=S.info.styles.map(s=>`<div class="style ${S.sel.has(s.name)?"on":""}" data-s="${s.name}" title="${esc(s.description)}"><img src="/thumbs/${s.name}.png" alt="" loading="lazy"><div class="nm">${s.name}</div></div>`).join("");
+  $$(".style").forEach(el=>el.onclick=()=>{const n=el.dataset.s; S.sel.has(n)?S.sel.delete(n):S.sel.add(n); el.classList.toggle("on"); drawKnobs(); schedule(); guide();});}
+$("#all-styles").onclick=()=>{S.info.styles.forEach(s=>S.sel.add(s.name)); drawStyles(); drawKnobs(); schedule(); guide();};
+$("#no-styles").onclick=()=>{S.sel.clear(); drawStyles(); drawKnobs(); schedule(); guide();};
+$("#reset-all").onclick=()=>{S.knobs={}; drawKnobs(); schedule();};
+const fmt = v => Array.isArray(v) ? v.join(",") : String(v);
+function knobInput(st, k){const cur=(S.knobs[st.name]||{})[k.key], v=cur!==undefined?cur:fmt(k.default), id=`k-${st.name}-${k.key}`;
+  if(k.key==="rotate") return `<div class="colorw"><input type="range" class="rot" min="-45" max="45" step="1" value="${esc(v)}" data-s="${st.name}" data-k="${k.key}" data-num="${id}" aria-label="rotation in degrees, positive is clockwise" title="positive = clockwise, negative = counter-clockwise"><input type="number" id="${id}" class="rotn" min="-180" max="180" step="1" value="${esc(v)}" data-s="${st.name}" data-k="${k.key}" data-live="1">°</div>`;
+  if(k.type==="choice") return `<select id="${id}" data-s="${st.name}" data-k="${k.key}">${k.choices.map(c=>`<option ${c===v?"selected":""}>${c}</option>`).join("")}</select>`;
+  if(k.type==="color"){const auto=v==="auto"; return `<div class="colorw">${k.default==="auto"?`<label style="color:var(--fg)"><input type="checkbox" data-auto="${id}" ${auto?"checked":""}> auto</label>`:""}<input type="color" id="${id}" data-s="${st.name}" data-k="${k.key}" value="${auto?((S.items.logo[0]||{}).accent||"#357dbd"):v}" ${auto?"disabled":""}></div>`;}
+  if(k.type==="int"||k.type==="float"){const step=k.type==="int"?1:(Math.abs(k.default)>=5?0.5:0.01); return `<input type="number" id="${id}" step="${step}" value="${esc(v)}" data-s="${st.name}" data-k="${k.key}" data-live="1">`;}
+  return `<input type="text" id="${id}" value="${esc(v)}" data-s="${st.name}" data-k="${k.key}">`;}
+const knobOrder = ks => [...ks].sort((a,b)=>(b.key==="rotate")-(a.key==="rotate"));
+function drawKnobs(){const open=new Set($$("details.knobs[open]").map(d=>d.dataset.s));
+  const sts=S.info.styles.filter(s=>S.sel.has(s.name));
+  $("#knobs").innerHTML=sts.length? sts.map(st=>{const ch=Object.keys(S.knobs[st.name]||{}).length;
+    return `<details class="knobs" data-s="${st.name}" ${open.has(st.name)?"open":""}><summary>${st.name}<span class="cnt">${ch?ch+" changed":""}</span><span class="sp"></span><a data-reset="${st.name}" ${ch&&st.knobs.length?"":"hidden"} style="color:var(--accent);font-weight:500;font-size:12px">reset</a><svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
+      <div class="desc">${esc(st.description)}</div><div class="grid">${knobOrder(st.knobs).map(k=>`<label for="k-${st.name}-${k.key}" class="${(S.knobs[st.name]||{})[k.key]!==undefined?"chg":""}">${k.key}</label>${knobInput(st,k)}`).join("")}</div></details>`;}).join("")
+    : '<div class="hint">Pick at least one style.</div>';
+  resetVis();
+  // live (draft) re-render while dragging/typing; full render on release/commit
+  $$("#knobs input.rot").forEach(r=>{const num=$("#"+r.dataset.num);
+    r.oninput=()=>{num.value=r.value; setKnob(r.dataset.s, r.dataset.k, r.value, true);};
+    r.onchange=()=>setKnob(r.dataset.s, r.dataset.k, r.value, false);});
+  $$("#knobs [data-k]:not(.rot)").forEach(el=>{
+    if(el.dataset.live) el.oninput=()=>{if(el.value===""||isNaN(+el.value)) return; syncRange(el); setKnob(el.dataset.s, el.dataset.k, el.value, true);};
+    el.onchange=()=>{syncRange(el); setKnob(el.dataset.s, el.dataset.k, el.value, false);};});
+  $$("#knobs [data-auto]").forEach(cb=>cb.onchange=()=>{const el=$("#"+cb.dataset.auto); el.disabled=cb.checked; setKnob(el.dataset.s, el.dataset.k, cb.checked?"auto":el.value, false);});
+  $$("#knobs [data-reset]").forEach(a=>a.onclick=e=>{e.preventDefault(); delete S.knobs[a.dataset.reset]; drawKnobs(); liveStyle(a.dataset.reset, false);});}
+// "reset" / "Reset all" only appear when there is something to reset
+function resetVis(){let any=false; for(const st of S.info.styles){const n=st.knobs.length&&S.sel.has(st.name)?Object.keys(S.knobs[st.name]||{}).length:0; any=any||n>0;
+    const a=document.querySelector(`[data-reset="${st.name}"]`); if(a) a.hidden=!n;} $("#reset-all").hidden=!any;}
+function syncRange(el){if(!el.classList.contains("rotn")) return; const r=document.querySelector(`input.rot[data-num="${el.id}"]`); if(r) r.value=el.value;}
+function setKnob(s,k,v,draft){const st=S.info.styles.find(x=>x.name===s), kn=st.knobs.find(x=>x.key===k);
+  S.knobs[s]=S.knobs[s]||{}; if(String(v)===fmt(kn.default)||(kn.type!=="text"&&kn.type!=="tuple"&&kn.type!=="color"&&kn.type!=="choice"&&+v===+kn.default)) delete S.knobs[s][k]; else S.knobs[s][k]=String(v);
+  if(!Object.keys(S.knobs[s]).length) delete S.knobs[s];
+  const lab=document.querySelector(`label[for="k-${s}-${k}"]`); if(lab) lab.classList.toggle("chg", !!(S.knobs[s]&&S.knobs[s][k]!==undefined));
+  const n=Object.keys(S.knobs[s]||{}).length, c=document.querySelector(`details.knobs[data-s="${s}"] .cnt`); if(c) c.textContent=n?n+" changed":""; resetVis();
+  liveStyle(s, draft);}
+
+// ---------- options
+$("#size").onchange=()=>{const c=$("#size").value==="custom"; $("#size-custom").hidden=!c; S.size=c?$("#size-custom").value:$("#size").value; schedule();};
+$("#size-custom").onchange=()=>{S.size=$("#size-custom").value; schedule();};
+$("#accent-auto").onchange=()=>{if(!$("#accent-auto").checked&&S.items.logo[0]) $("#accent").value=S.items.logo[0].accent; $("#accent").disabled=$("#accent-auto").checked; S.accent=$("#accent-auto").checked?"":$("#accent").value; schedule();};
+$("#accent").onchange=()=>{S.accent=$("#accent").value; schedule();};
+
+// ---------- rendering
+// Each style re-renders on its own: a knob change only redraws that style's tiles. Newer requests
+// supersede older ones (client aborts them; the server skips superseded drafts before rendering).
+const CLIENT=Math.random().toString(36).slice(2), RS={}, lim={n:0,q:[]};
+const slot=()=>new Promise(r=>{if(lim.n<3){lim.n++; r();} else lim.q.push(r);}), release=()=>{const f=lim.q.shift(); f?f():lim.n--;};
+let timer=null, pending=0;
+function schedule(){clearTimeout(timer); timer=setTimeout(render, 250);}
+// Drafts are throttled (one wave at most every 150 ms; while a wave runs, the latest value waits for it),
+// so the preview keeps moving while dragging. A full-quality render follows on release or after a pause.
+function liveStyle(s, draft){const st=RS[s]=RS[s]||{seq:0};
+  clearTimeout(st.settle);
+  if(!draft){clearTimeout(st.timer); st.timer=null; st.dirty=false; runStyle(s, false); return;}
+  if(st.running){st.dirty=true; return;}
+  if(!st.timer) st.timer=setTimeout(()=>{st.timer=null; runStyle(s, true);}, 150);}
+function status(){const tiles=$$(".tile"), done=tiles.filter(t=>t.dataset.rid).length, failed=$$(".tile.err").length;
+  $("#status").textContent= pending?`Rendering… ${done}/${tiles.length} done`:(tiles.length?`${tiles.length} icon${tiles.length>1?"s":""}${failed?`, ${failed} failed`:""}`:"");
+  $("#zip").disabled=pending>0||!done;}
+const sigOf = s => JSON.stringify([S.size, S.accent, S.knobs[s]||{}]);
+function render(){const apps=ready("app"), logos=ready("logo"), styles=S.info.styles.filter(s=>S.sel.has(s.name));
+  $("#empty").hidden=!!(apps.length&&logos.length&&styles.length);
+  if(!apps.length||!logos.length||!styles.length){$("#groups").innerHTML=""; $("#status").textContent=!styles.length&&apps.length&&logos.length?"Pick a style":""; $("#zip").disabled=true; return;}
+  // keep tiles that are already rendered with the same inputs; only new or changed ones render
+  const old={}; $$(".tile").forEach(el=>{if(el.dataset.rid&&el.dataset.sig===sigOf(el.dataset.style)) old[el.dataset.style+"|"+el.dataset.app+"|"+el.dataset.logo]=el;});
+  const groups=$("#groups"), frag=document.createDocumentFragment(), todo=[];
+  for(const st of styles){const g=document.createElement("div"); g.className="group"; g.dataset.style=st.name;
+    g.innerHTML=`<h3>${st.name}</h3><div class="gd">${esc(st.description)}</div><div class="tiles"></div>`; const box=g.querySelector(".tiles"); let fresh=false;
+    for(const lg of logos) for(const ap of apps){const k=st.name+"|"+ap.id+"|"+lg.id; let el=old[k];
+      if(el) el.querySelector(".lab").innerHTML=`${esc(ap.name)}${logos.length>1?" · "+esc(lg.name):""}`;
+      else{fresh=true; el=document.createElement("div"); el.className="tile"; Object.assign(el.dataset,{style:st.name, app:ap.id, logo:lg.id});
+        el.innerHTML=`<div class="im"><div class="spin"></div></div><div class="lab">${esc(ap.name)}${logos.length>1?" · "+esc(lg.name):""}</div><div class="info"></div><div class="dl"></div>`;}
+      box.appendChild(el);}
+    frag.appendChild(g); if(fresh) todo.push(st.name);}
+  groups.replaceChildren(frag); status(); todo.forEach(s=>runStyle(s, false, true));}
+async function runStyle(s, draft, missingOnly){const st=RS[s]=RS[s]||{seq:0}; const seq=++st.seq; st.running=true;
+  if(st.ctrl) st.ctrl.abort(); const ctrl=st.ctrl=new AbortController();
+  const tiles=$$(`.tile[data-style="${s}"]`).filter(el=>!missingOnly||!el.dataset.rid); if(!tiles.length){st.running=false; return;}
+  const sig=sigOf(s);
+  tiles.forEach(el=>{el.classList.add("busy"); if(!draft) delete el.dataset.rid;});
+  pending+=tiles.length; status();
+  await Promise.all(tiles.map(async el=>{await slot();
+    try{if(seq!==st.seq||!el.isConnected) return;
+      const body={app:el.dataset.app, logo:el.dataset.logo, style:s, size:S.size, accent:S.accent, params:S.knobs[s]||{}, draft, group:CLIENT+":"+s, seq};
+      const r=await api("/api/render",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:ctrl.signal});
+      if(seq!==st.seq||!el.isConnected) return;
+      const img=new Image(); img.src=r.png; await img.decode().catch(()=>{}); if(seq!==st.seq) return;
+      el.classList.remove("err"); el.querySelector(".im").replaceChildren(img); el.querySelector(".info").textContent=r.info||"";
+      if(!draft){el.dataset.rid=r.id; el.dataset.sig=sig; el.querySelector(".dl").innerHTML=`<a href="${r.png}?download=1" download>PNG</a><a href="${r.icns}" download>.icns</a>`;}}
+    catch(e){if(e.name==="AbortError"||seq!==st.seq||/superseded/.test(e.message)) return; el.classList.add("err"); el.querySelector(".im").textContent=e.message;}
+    finally{release(); if(seq===st.seq) el.classList.remove("busy"); pending--; status();}}));
+  if(seq!==st.seq) return; st.running=false;
+  if(draft&&st.dirty){st.dirty=false; liveStyle(s, true);}
+  else if(draft) st.settle=setTimeout(()=>liveStyle(s, false), 400);}
+$("#zip").onclick=async()=>{const b=$("#zip"); b.disabled=true; b.textContent="Preparing zip…";
+  try{const blob=await post("/api/zip",{ids:$$(".tile").map(t=>t.dataset.rid).filter(Boolean)}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="dock-icons.zip"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);}
+  catch(e){toast(e.message);} b.disabled=false; b.textContent="Download all (.zip)";};
+
+// ---------- boot
+(async()=>{[S.info, S.samples]=await Promise.all([api("/api/info"), api("/api/samples")]); $("#svgnote").hidden=!!S.info.svg;
+  S.sel=new Set(S.info.styles.map(s=>s.name));   // every style is selected to start with
+  $$('.t4[data-act=apps]').forEach(b=>{b.disabled=!S.info.mac; if(!S.info.mac){b.title="Only available when the server runs on macOS"; b.querySelector(".mac-note").textContent="macOS only";}});
+  for(const kind of ["app","logo"]){const b=document.querySelector(`.t4[data-kind=${kind}][data-act=samples]`); if(!(S.samples[kind]||[]).length){b.disabled=true;}}
+  if(!(S.samples.app||[]).length) $("#empty-hint").textContent="Use the tiles on the left. Icons re-render automatically as you change anything.";
+  else $("#samples2").onclick=e=>{e.preventDefault(); openSamples(S.items.app.length?"logo":"app");};
+  // warm the browser cache so the sample picker shows its thumbnails instantly
+  Object.values(S.samples).flat().forEach(s=>{new Image().src=s.thumb;});
+  $("#icnsw").textContent=S.info.icns==="iconutil"?"Apple's iconutil":"the built-in writer";
+  drawStyles(); drawKnobs(); guide();})();
+</script>
+</body>
+</html>
