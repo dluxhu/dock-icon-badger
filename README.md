@@ -114,4 +114,4 @@ Open the app's **Get Info** in Finder and drag the `.icns` (or PNG) onto the ico
 
 ## License
 
-[MIT](LICENSE) © 2026 Balazs Szabo. This covers the code and the original artwork in `samples/`, `examples/` and `web/`. The Todo-Dodo logo (`samples/badges/todo-dodo.*`, also shown in the examples) belongs to Todo-Dodo, is included with permission as a sample badge, and is not covered by the MIT license.
+[MIT](LICENSE) © 2026 Balazs Szabo. This covers the code and the original artwork in `samples/`, `examples/` and `web/`. The Todo-Dodo logo (`samples/badges/todo-dodo.*`, also shown in the examples) belongs to [dLux Services LLC](http://dlux.app), is included with permission as a sample badge, and is not covered by the MIT license.
